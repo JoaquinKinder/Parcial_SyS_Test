@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Parcial Señales y Sistemas - UNER</title>
+    <style>
+        :root { --blue: #0d47a1; --green: #4caf50; --red: #f44336; --gray: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gray); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 850px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: white; padding: 20px; border-bottom: 2px solid #eee; text-align: center; color: var(--blue); font-weight: bold; font-size: 1.4rem; }
+        .screen { padding: 30px; display: none; }
+        .active { display: block; }
+        
+        /* Preguntas */
+        .q-block { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .q-text { font-weight: 600; margin-bottom: 15px; font-size: 1.1rem; }
+        .opt { padding: 12px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 6px; }
+        .opt:hover { background: #f0f4ff; }
+        .opt.selected { border-color: var(--blue); background: #e3f2fd; }
+        
+        /* Resultados */
+        .res-item { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--blue); }
+        .score-badge { float: right; font-weight: bold; color: var(--blue); }
+        .correct-ans { color: var(--green); font-size: 0.9rem; margin-top: 10px; font-weight: bold; }
+        
+        .btn { background: var(--blue); color: white; border: none; padding: 15px 40px; border-radius: 25px; cursor: pointer; font-size: 1.1rem; display: block; margin: 20px auto; }
+        .total-score { text-align: center; font-size: 2.5rem; color: var(--blue); font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">FACULTAD DE INGENIERÍA - UNER</div>
+
+    <div id="home" class="screen active">
+        <h2 style="text-align: center;">Simulador de 1er Parcial</h2>
+        <p style="text-align: center; color: #666;">El examen consta de 5 preguntas aleatorias del banco oficial.</p>
+        <button class="btn" onclick="iniciarParcial()">INICIAR PARCIAL</button>
+    </div>
+
+    <div id="exam" class="screen">
+        <div id="questions-list"></div>
+        <button class="btn" onclick="finalizarParcial()">FINALIZAR</button>
+    </div>
+
+    <div id="results" class="screen">
+        <h2 style="text-align: center;">Resumen del Parcial</h2>
+        <div id="results-detail"></div>
+        <div class="total-score">Puntuación Final: <span id="final-val">0</span>/100</div>
+        <button class="btn" onclick="location.reload()">REINTENTAR</button>
+    </div>
+</div>
+
+<script>
+    let preguntasCargadas = [];
+    let seleccion = {};
+
+    async function iniciarParcial() {
+        const res = await fetch('/generar_parcial');
+        preguntasCargadas = await res.json();
+        
+        const list = document.getElementById('questions-list');
+        list.innerHTML = "";
+        preguntasCargadas.forEach((p, idx) => {
+            seleccion[p.id] = [];
+            const html = `
+                <div class="q-block">
+                    <div class="q-text">${idx+1}. ${p.pregunta}</div>
+                    <div id="opts-${p.id}">
+                        ${p.opciones.map((o, i) => `<div class="opt" onclick="toggleOpt(this, ${p.id}, ${i})">${o}</div>`).join('')}
+                    </div>
+                </div>`;
+            list.innerHTML += html;
+        });
+        
+        switchScreen('exam');
+    }
+
+    function toggleOpt(el, pId, oIdx) {
+        if (seleccion[pId].includes(oIdx)) {
+            seleccion[pId] = seleccion[pId].filter(i => i !== oIdx);
+            el.classList.remove('selected');
+        } else {
+            seleccion[pId].push(oIdx);
+            el.classList.add('selected');
+        }
+    }
+
+    async function finalizarParcial() {
+        const res = await fetch('/calificar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(seleccion)
+        });
+        const data = await res.json();
+        
+        document.getElementById('final-val').innerText = data.puntaje_final;
+        const detail = document.getElementById('results-detail');
+        detail.innerHTML = "";
+        
+        data.detalle.forEach(res => {
+            detail.innerHTML += `
+                <div class="res-item">
+                    <span class="score-badge">Puntaje: ${res.score}/20</span>
+                    <div style="font-weight:bold">${res.pregunta}</div>
+                    <div class="correct-ans">Correctas: ${res.correctas_texto.join(' | ')}</div>
+                    <div style="color:#666; font-size:0.85rem; margin-top:5px italic">${res.feedback}</div>
+                </div>`;
+        });
+        
+        switchScreen('results');
+    }
+
+    function switchScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+    }
+</script>
+</body>
+</html>
