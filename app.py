@@ -63,8 +63,8 @@ preguntas_db = [
         "opciones": [
             "La transformada de fourier de una secuencia discreta es la transformada Z de la secuencia evaluda sobre el eje imaginario",
             "Ninguna de las opciones es correcta.",
-            "La transformada de fourier de una secuencia discreta es la transformada Z de la secuencia evaluada fuera delcirculo unitario",
-            "La transformada de fourier de una secuencia discreta es la transformada Z de la secuencia evaluada sobre delcirculo unitario"
+            "La transformada de fourier de una secuencia discreta es la transformada Z de la secuencia evaluada fuera del circulo unitario",
+            "La transformada de fourier de una secuencia discreta es la transformada Z de la secuencia evaluada sobre el circulo unitario"
         ],
         "correctas": [3], # [cite: 85]
     },
@@ -98,7 +98,7 @@ preguntas_db = [
         "opciones": [
             "Causal",
             "Ninguna de las opciones.",
-            "Linea",
+            "Lineal",
             "Invariante en el tiempo",
             "Con memoria"
         ],
@@ -293,10 +293,10 @@ preguntas_db = [
             "Un espacio vectorial es un conjunto vectores en R^60 que cumplen ciertas propiedades algebraicas.",
             "La norma depende de un elemento del espacio mientras que la distancia depende de dos elementos.",
             "La norma nos proporciona información acerca de la estructura de la señal.",
-            "La norma siempre es un numero reall no negativo.",
+            "La norma siempre es un numero real no negativo.",
             "La norma 0 indica la cantidad de elementos de la señal iguales a cero."
         ],
-        "correctas": [0,1,2,4],
+        "correctas": [0,2,4],
     },
     {
         "id": 25,
@@ -599,7 +599,7 @@ def index():
 
 @app.route('/generar_parcial')
 def generar_parcial():
-    seleccion = random.sample(preguntas_db, 5)
+    seleccion = random.sample(preguntas_db, 8)
     return jsonify(seleccion)
 
 @app.route('/calificar', methods=['POST'])
@@ -619,8 +619,8 @@ def calificar():
         aciertos = len(correctas.intersection(usuario))
         errores = len(usuario.difference(correctas))
         
-        # Cálculo simplificado: (Aciertos / Total_Correctas) * 20 - Penalidad por errores
-        score_pregunta = max(0, (aciertos / len(correctas)) * 20 - (errores * 5))
+        # Cálculo simplificado: (Aciertos / Total_Correctas) * 12,5 - Penalidad por errores
+        score_pregunta = max(0, (aciertos / len(correctas)) * 12.5 - (errores * 3))
         
         puntaje_total += score_pregunta
         resultados.append({
