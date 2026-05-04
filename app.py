@@ -599,7 +599,6 @@ def index():
 
 @app.route('/generar_parcial')
 def generar_parcial():
-    # Selecciona 5 preguntas aleatorias [cite: 12]
     seleccion = random.sample(preguntas_db, 5)
     return jsonify(seleccion)
 
